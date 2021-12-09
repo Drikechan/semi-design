@@ -1,8 +1,8 @@
 <template>
   <div>
-    <el-select v-bind="$attrs" v-on="$listeners" :filter-method="filterMethod"
+    <el-select :value="value" @input="change($event)" v-bind="$attrs"  v-on="$listeners" :filter-method="filterMethod" 
       v-el-select-loadmore="loadMore(rangeNumber)" :loading="searchLoad" filterable @visible-change="visibleChange">
-      <div class="select-action" v-if="isMultiline">
+      <div class="select-action" v-if="$attrs.multiple">
         <button @click="selectAllSeller" class="select-all-btn">Select All</button>
         <button @click="deselectAllSeller" class="deselect-all-btn">Deselect All</button>
       </div>        
@@ -19,9 +19,8 @@ export default {
       type: Array,
       default: () => [],
     },
-    isMultiline: {
-      type: Boolean,
-      default: false
+    value: {
+      type: [Array, String, Number]
     }
   },
   data: () => ({
@@ -32,7 +31,9 @@ export default {
     timer: null,
     tableLoading: false,
     isHasPermission: true,
-    dataList: []
+    dataList: [],
+    list: [],
+    modelValue: null
   }),
   directives: {
     "el-select-loadmore": (el, binding) => {
@@ -75,18 +76,34 @@ export default {
       flag && this.filterMethod(""); // 初始化默认值
       this.rangeNumber = 10;
     },
+    change(e) {
+      this.$emit('input', e)
+    },
     selectAllSeller() {
-      // this.logisticsModel.itemCode = [];
-      // this.options.map((item) => {
-      //   this.logisticsModel.itemCode.push(item.value);
-      // });
-      this.$emit('select-all', list)
+      this.value = [];
+      this.value = this.options.reduce((pre, item) => {
+        pre.push(item.value);
+        return pre;
+      }, [])
     },
     deselectAllSeller() {
-      // this.logisticsModel.itemCode = [];
-      this.$emit('de-select-all', list)
+      this.value = [];
     },
+    initSelect() {
+      let map = new Map(), left = 0, len = this.value.length;
+      return this.options.reduce((pre, item) => {
+        while(left < (len > 20 ? 20 : len) ) {
+          map.set(this.value[left], left);
+          left++;
+        }
+        if (map.has(item.value)) pre.push(item);
+        return pre;
+      }, [])
+    }
   },
+  created() {
+    this.dataList = this.initSelect();
+  }
 };
 </script>
 
@@ -125,9 +142,8 @@ export default {
   white-space: nowrap;
 }
 
-
-
-.select-dropdown__item {
+>>>.el-select-dropdown__item {
+  width: 100px;
   display: inline-block;
   max-width: 260px !important;
   overflow: hidden;
