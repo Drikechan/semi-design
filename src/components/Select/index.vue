@@ -1,12 +1,14 @@
 <template>
   <div>
-    <el-select :value="value" @input="change($event)" v-bind="$attrs"  v-on="$listeners" :filter-method="filterMethod" 
-      v-el-select-loadmore="loadMore(rangeNumber)" :loading="searchLoad" filterable @visible-change="visibleChange">
-      <div class="select-action" v-if="$attrs.multiple">
-        <button @click="selectAllSeller" class="select-all-btn">Select All</button>
-        <button @click="deselectAllSeller" class="deselect-all-btn">Deselect All</button>
-      </div>        
-      <el-option v-for="item in dataList.slice(0, rangeNumber)" :key="item.value" :label="item.label" :value="item.value"></el-option>
+    <el-select class="michael-select" :value="value" @input="updateValue" v-bind="$attrs" v-on="$listeners"
+      :filter-method="filterMethod" v-el-select-loadmore="loadMore(rangeNumber)" :loading="searchLoad" filterable
+      @visible-change="visibleChange">
+      <div class="select-all" v-if="$attrs.multiple">
+        <button @click="selectAll" class="select-all__option">Select All</button>
+        <button @click="deselectAll" class="deselect-all__option">Deselect All</button>
+      </div>
+      <el-option v-for="item in dataList.slice(0, rangeNumber)" :key="item.value" :label="item.text"
+        :value="item.value"></el-option>
     </el-select>
   </div>
 </template>
@@ -17,7 +19,7 @@ export default {
   props: {
     options: {
       type: Array,
-      default: () => [],
+      default: () => []
     },
     value: {
       type: [Array, String, Number]
@@ -29,8 +31,6 @@ export default {
     rangeNumber: 20,
     searchLoad: false /* 下拉框的loading状态 */,
     timer: null,
-    tableLoading: false,
-    isHasPermission: true,
     dataList: [],
     list: [],
     modelValue: null
@@ -43,28 +43,26 @@ export default {
       );
       if (SELECTWRAP_ROM) {
         // 添加scroll事件
-        SELECTWRAP_ROM.addEventListener("scroll", function () {
+        SELECTWRAP_ROM.addEventListener("scroll", function() {
           // 判断滚动
           const condition =
             this.scrollHeight - this.scrollTop <= this.clientHeight;
           condition && binding.value();
         });
       }
-    },
+    }
   },
   methods: {
-    loadMore(n) {
+    loadMore() {
       return () => (this.rangeNumber += 20);
     },
     filterMethod(query) {
       if (this.timer != null) clearTimeout(this.timer);
       !this.searchLoad && (this.searchLoad = true);
       this.timer = setTimeout(() => {
-        this.dataList = !!query
-          ? this.options.filter((el) =>
-              el.text.toLowerCase().includes(query.toLowerCase())
-            )
-          : this.options;
+        this.dataList = !!query ? this.options.filter(el =>
+            el.text.toLowerCase().includes(query.toLowerCase())
+        ) : this.options;
         clearTimeout(this.timer);
         this.searchLoad = false;
         this.rangeNumber = 20;
@@ -76,29 +74,40 @@ export default {
       flag && this.filterMethod(""); // 初始化默认值
       this.rangeNumber = 10;
     },
-    change(e) {
-      this.$emit('input', e)
+    updateValue(value) {
+      this.$emit("input", value);
     },
-    selectAllSeller() {
-      this.value = [];
-      this.value = this.options.reduce((pre, item) => {
-        pre.push(item.value);
-        return pre;
-      }, [])
+    selectAll() {
+      let modelValueList = [];
+      modelValueList = this.options.reduce((result, item) => {
+        result.push(item.value);
+        return result;
+      }, []);
+      this.updateValue(modelValueList);
     },
-    deselectAllSeller() {
-      this.value = [];
+    deselectAll() {
+      let modelValueList = [];
+      this.updateValue(modelValueList);
     },
     initSelect() {
-      let map = new Map(), left = 0, len = this.value.length;
-      return this.options.reduce((pre, item) => {
-        while(left < (len > 20 ? 20 : len) ) {
+      /* 实现反渲染 */
+      let map = new Map(),
+        left = 0,
+        len = this.value.length,
+        saveList = [];
+      /* 这一步其实是将我们要渲染的数据插入到dataList中 */
+      /* 这边用for循环是为了减少循环次数，找到所有符合条件的value我们就返回出去*/
+      for (let i = 0; i < this.options.length; i++) {
+        let item = this.options[i];
+        /* 创建一个指针，这个执行会在函数执行的第一次，将value值插入map，但是不是无限制的插入，目前我们这边配置的是20条数据，一般单选是一条，多选的话展示其实20条应该也足够了 */
+        while (left < (len > 20 ? 20 : len)) {
           map.set(this.value[left], left);
           left++;
         }
-        if (map.has(item.value)) pre.push(item);
-        return pre;
-      }, [])
+         /* 判断map里面是否存在循环的value */
+        map.has(item.value) && saveList.push(item);
+        if (saveList.length >= left ) return saveList;
+      }
     }
   },
   created() {
@@ -108,16 +117,16 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.select-action {
+.select-all {
   display: flex;
   padding: 0 10px;
   margin-top: 10px;
-  .deselect-all-btn {
+  .deselect-all__option {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
     border-left: none;
   }
-  .select-all-btn {
+  .select-all__option {
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
   }
@@ -142,8 +151,7 @@ export default {
   white-space: nowrap;
 }
 
->>>.el-select-dropdown__item {
-  width: 100px;
+/deep/.el-select-dropdown__item {
   display: inline-block;
   max-width: 260px !important;
   overflow: hidden;

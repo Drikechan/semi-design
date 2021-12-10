@@ -2,7 +2,7 @@
   <div id="app">
     <el-button @click="show">点击</el-button>
     <el-dialog :visible="visibleFlag">
-        <michael-select v-model="value1.name" :options="options" :multiple="true" :collapse-tags="true" class="select-style" ></michael-select>
+        <michael-select v-model="value1.name" :options="options" :multiple="true" :collapse-tags="true" ></michael-select>
     </el-dialog>
   </div>
 </template>
@@ -25,8 +25,8 @@ export default {
   },
   methods: {
     createData () {
-      for (let i = 0; i < 10000; i++) {
-        this.options.push({label: `选项${i}`, value: i})
+      for (let i = 0; i < 100000; i++) {
+        this.options.push({text: `选项${i}`, value: i})
       }
     },
     show() {
