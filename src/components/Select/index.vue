@@ -1,6 +1,5 @@
 <template>
-  <div>
-    <el-select class="michael-select" :value="value" @input="updateValue" v-bind="$attrs" v-on="$listeners"
+    <el-select  :value="value" @input="updateValue" v-bind="$attrs" v-on="$listeners"
       :filter-method="filterMethod" v-el-select-loadmore="loadMore(rangeNumber)" :loading="searchLoad" filterable
       @visible-change="visibleChange">
       <div class="select-all" v-if="$attrs.multiple">
@@ -10,7 +9,6 @@
       <el-option v-for="item in dataList.slice(0, rangeNumber)" :key="item.value" :label="item.text"
         :value="item.value"></el-option>
     </el-select>
-  </div>
 </template>
 
 <script>
@@ -93,20 +91,22 @@ export default {
       /* 实现反渲染 */
       let map = new Map(),
         left = 0,
-        len = this.value.length,
+        len = this.value.length || 1,
         saveList = [];
       /* 这一步其实是将我们要渲染的数据插入到dataList中 */
       /* 这边用for循环是为了减少循环次数，找到所有符合条件的value我们就返回出去*/
       for (let i = 0; i < this.options.length; i++) {
         let item = this.options[i];
         /* 创建一个指针，这个执行会在函数执行的第一次，将value值插入map，但是不是无限制的插入，目前我们这边配置的是20条数据，一般单选是一条，多选的话展示其实20条应该也足够了 */
-        while (left < (len > 20 ? 20 : len)) {
-          map.set(this.value[left], left);
-          left++;
-        }
-         /* 判断map里面是否存在循环的value */
-        map.has(item.value) && saveList.push(item);
-        if (saveList.length >= left ) return saveList;
+          while (left < (len > 20 ? 20 : len)) {
+            map.set(Array.isArray(this.value) ? this.value[left] : this.value, left);
+            left++;
+          }
+           /* 判断map里面是否存在循环的value */
+
+          map.has(item.value) &&  saveList.push(item) ;
+          
+          if (saveList.length >= left || typeof this.value == 'string') return saveList;
       }
     }
   },
@@ -117,45 +117,44 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.select-all {
-  display: flex;
-  padding: 0 10px;
-  margin-top: 10px;
-  .deselect-all__option {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-left: none;
+  .select-all {
+    display: flex;
+    padding: 0 10px;
+    margin-top: 10px;
+    .deselect-all__option {
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      border-left: none;
+    }
+    .select-all__option {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    button {
+      width: 49.5%;
+      background-color: #fff;
+      padding: 5px 10px;
+      font-size: 12px;
+      line-height: 1.5;
+      border-radius: 3px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
   }
-  .select-all__option {
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-  }
-  button {
-    width: 49.5%;
-    background-color: #fff;
-    padding: 5px 10px;
-    font-size: 12px;
-    line-height: 1.5;
-    border-radius: 3px;
-    border: 1px solid #ccc;
-    cursor: pointer;
-  }
-}
+  // .el-select-dropdown__item {
+  //   display: inline-block;
+  //   max-width: 260px !important;
+  //   overflow: hidden;
+  //   text-overflow: ellipsis;
+  //   white-space: nowrap;
+  // }  
 </style>
-<style scoped>
-/deep/ .el-select__tags-text {
+<style >
+/* /deep/ .el-select__tags-text {
   display: inline-block;
   max-width: 270px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/deep/.el-select-dropdown__item {
-  display: inline-block;
-  max-width: 260px !important;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+} */
 </style>
