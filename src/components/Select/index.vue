@@ -141,20 +141,4 @@ export default {
       cursor: pointer;
     }
   }
-  // .el-select-dropdown__item {
-  //   display: inline-block;
-  //   max-width: 260px !important;
-  //   overflow: hidden;
-  //   text-overflow: ellipsis;
-  //   white-space: nowrap;
-  // }  
-</style>
-<style >
-/* /deep/ .el-select__tags-text {
-  display: inline-block;
-  max-width: 270px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-} */
 </style>
