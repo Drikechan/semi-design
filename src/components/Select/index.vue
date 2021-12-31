@@ -3,11 +3,13 @@
       :filter-method="filterMethod" v-el-select-loadmore="loadMore(rangeNumber)" :loading="searchLoad" filterable
       @visible-change="visibleChange">
       <div class="select-all" v-if="$attrs.multiple">
-        <button @click="selectAll" class="select-all__option">Select All</button>
-        <button @click="deselectAll" class="deselect-all__option">Deselect All</button>
+        <button @click="selectAll" class="select-all__option">{{ selectAllName }}</button>
+        <button @click="deselectAll" class="deselect-all__option">{{ deselectAllName }}</button>
       </div>
       <el-option v-for="item in dataList.slice(0, rangeNumber)" :key="item.value" :label="item.text"
-        :value="item.value"></el-option>
+        :value="item.value">
+          <span class="select-dropdown__item" :title="item.text">{{ item.text }}</span>
+        </el-option>
     </el-select>
 </template>
 
@@ -21,6 +23,14 @@ export default {
     },
     value: {
       type: [Array, String, Number]
+    },
+    selectAllName: {
+      type: String,
+      default: 'Select All'
+    },
+    deselectAllName: {
+      type: String,
+      default: 'Deselect All'
     }
   },
   data: () => ({
@@ -55,8 +65,10 @@ export default {
       return () => (this.rangeNumber += 20);
     },
     filterMethod(query) {
+      /* 清除定时器 */
       if (this.timer != null) clearTimeout(this.timer);
       !this.searchLoad && (this.searchLoad = true);
+      /* 这边创建定时器是因为防止快速导致搜索不准确 */
       this.timer = setTimeout(() => {
         this.dataList = !!query ? this.options.filter(el =>
             el.text.toLowerCase().includes(query.toLowerCase())
@@ -111,7 +123,7 @@ export default {
     }
   },
   created() {
-    this.dataList = this.initSelect();
+    this.dataList = this.initSelect() || [];
   }
 };
 </script>
@@ -141,4 +153,11 @@ export default {
       cursor: pointer;
     }
   }
+ .select-dropdown__item {
+  display: inline-block;
+  max-width: 260px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+} 
 </style>
