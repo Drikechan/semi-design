@@ -1,26 +1,102 @@
 <template>
   <div>
-    <el-table v-bind="$attrs" v-on="$listeners">
+    <el-table :data="data" v-bind="$attrs" v-on="$listeners" :header-cell-style="defaultOptions.orisTableHeader"
+      :stripe="defaultOptions.stripe" :span-method="this.merge ? this.mergeMethod : this.spanMethod">
       <template v-for="item in columns">
-        <el-table-column v-bind="item" :key="item.prop" :align="item.align || 'left'"></el-table-column>
+        <slot v-if="item.slot" :name="item.slot"></slot>
+        <el-table-column v-else v-bind="item" :key="item.prop" :align="item.align || 'left'"></el-table-column>
       </template>
     </el-table>
+    <el-pagination v-if="pagination" v-bind="$attrs" v-on="$listeners" :layout="layout" :page-sizes="pageSizes"></el-pagination>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'OrsdTable',
+  name: 'OrisdTable',
   props: {
+    data: {
+      type: Array,
+      default: () => []
+    },
     columns: {
+      type: Array,
+      default: () => [],
+    },
+    pagination: {
+      type: Boolean,
+      default: true
+    },
+    layout: {
+      type: String,
+      default: "total, sizes, prev, pager, next, jumper"
+    },
+    pageSizes: {
+      type: Array,
+      default: () => [10, 20, 50, 100, 300, 500]
+    },
+    merge: {
       type: Array,
       default: () => []
     }
-  }
+  },
+  data: () => ({
+    defaultOptions: {
+      border: false,
+      stripe: false,
+      orisTableHeader: { background: '#EBEEF5', color: '#606266' },
+    },
+    mergeLine: {},
+    mergeIndex: {}
+  }),
+  created() {
+    this.getMergeArr(this.data, this.merge)
+  },
+  methods: {
+    /* eslint-disable */
+    getMergeArr (tableData, merge) {
+      if (!merge) return
+      this.mergeLine = {}
+      this.mergeIndex = {}
+      merge.forEach(item => {
+        tableData.forEach((data, i) => {
+          if (i === 0) {
+            this.mergeIndex[item] = this.mergeIndex[item] || [];
+            this.mergeIndex[item].push(1);
+            this.mergeLine[item] = 0;
+          } else {
+            if (data[item] === tableData[i - 1][item]) {
+              this.mergeIndex[item][this.mergeLine[item]] += 1
+              this.mergeIndex[item].push(0)
+            } else {
+              this.mergeIndex[item].push(1)
+              this.mergeLine[item] = i
+            }
+          }
+        })
+      })
 
-}
+      
+    },
+    mergeMethod ({ row, column, rowIndex, columnIndex }) {
+      const index = this.merge.indexOf(column.property)
+      if (index > -1) {
+        const _row = this.mergeIndex[this.merge[index]][rowIndex]
+        const _col = _row > 0 ? 1 : 0
+        return {
+          rowspan: _row,
+          colspan: _col
+        }
+      }
+    }
+  },
+  watch: {
+    merge () {
+      this.getMergeArr(this.data, this.merge)
+    }    
+  }
+};
 </script>
 
 <style>
-
 </style>
