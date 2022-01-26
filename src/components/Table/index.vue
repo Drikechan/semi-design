@@ -7,7 +7,9 @@
         <el-table-column v-else v-bind="item" :key="item.prop" :align="item.align || 'left'"></el-table-column>
       </template>
     </el-table>
-    <el-pagination v-if="pagination" v-bind="$attrs" v-on="$listeners" :layout="layout" :page-sizes="pageSizes"></el-pagination>
+    <div :class="paginationClassName">
+      <el-pagination v-if="pagination" v-bind="$attrs" v-on="$listeners" :layout="layout" :page-sizes="pageSizes"></el-pagination>
+    </div>
   </div>
 </template>
 
@@ -38,6 +40,10 @@ export default {
     merge: {
       type: Array,
       default: () => []
+    },
+    paginationClassName: {
+      type: String,
+      default: 'pagination-wraaper__right'
     }
   },
   data: () => ({
@@ -66,11 +72,11 @@ export default {
             this.mergeLine[item] = 0;
           } else {
             if (data[item] === tableData[i - 1][item]) {
-              this.mergeIndex[item][this.mergeLine[item]] += 1
-              this.mergeIndex[item].push(0)
+              this.mergeIndex[item][this.mergeLine[item]] += 1;
+              this.mergeIndex[item].push(0);
             } else {
-              this.mergeIndex[item].push(1)
-              this.mergeLine[item] = i
+              this.mergeIndex[item].push(1);
+              this.mergeLine[item] = i;
             }
           }
         })
@@ -78,14 +84,15 @@ export default {
 
       
     },
-    mergeMethod ({ row, column, rowIndex, columnIndex }) {
-      const index = this.merge.indexOf(column.property)
-      if (index > -1) {
-        const _row = this.mergeIndex[this.merge[index]][rowIndex]
-        const _col = _row > 0 ? 1 : 0
+    mergeMethod (data) {
+      const { column, rowIndex } = data;
+      const INDEX = this.merge.indexOf(column.property)
+      if (INDEX > -1) {
+        const ROW = this.mergeIndex[this.merge[INDEX]][rowIndex];
+        const COL = ROW > 0 ? 1 : 0;
         return {
-          rowspan: _row,
-          colspan: _col
+          rowspan: ROW,
+          colspan: COL
         }
       }
     }
@@ -98,5 +105,10 @@ export default {
 };
 </script>
 
-<style>
+<style lang="scss" scoped>
+.pagination-wraaper__right {
+  width: 100%;
+  text-align: right;
+  margin-top: 20px;
+}
 </style>
