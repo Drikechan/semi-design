@@ -4,18 +4,20 @@
       :stripe="defaultOptions.stripe" :span-method="this.merge ? this.mergeMethod : this.spanMethod">
       <template v-for="item in columns">
         <slot v-if="item.slot" :name="item.slot"></slot>
-        <el-table-column v-else v-bind="item" :key="item.prop" :align="item.align || 'left'"></el-table-column>
+        <el-table-column v-else  v-bind="item" v-on="$listeners" :key="item.prop" :align="item.align || 'left'"></el-table-column>
       </template>
     </el-table>
     <div :class="paginationClassName">
-      <el-pagination v-if="pagination" v-bind="$attrs" v-on="$listeners" :layout="layout" :page-sizes="pageSizes"></el-pagination>
+      <el-pagination v-if="pagination" v-bind="$attrs" v-on="$listeners" :layout="layout" :page-sizes="pageSizes"
+        :current-page="pageInfo.page" :page-size="pageInfo.limit" :total="total" @current-change="currentChange"
+        @size-change="sizeChange"></el-pagination>
     </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'OrisdTable',
+  name: 'MJTable',
   props: {
     data: {
       type: Array,
@@ -43,7 +45,15 @@ export default {
     },
     paginationClassName: {
       type: String,
-      default: 'pagination-wraaper__right'
+      default: 'pagination-wrapper__right'
+    },
+    url: {
+      type: String,
+      default: ''
+    },
+    query: {
+      type: Object,
+      default: () => {}
     }
   },
   data: () => ({
@@ -53,10 +63,16 @@ export default {
       orisTableHeader: { background: '#EBEEF5', color: '#606266' },
     },
     mergeLine: {},
-    mergeIndex: {}
+    mergeIndex: {},
+    total: 0,
+    pageInfo: {
+      page: 1,
+      limit: 10
+    }
   }),
-  created() {
-    this.getMergeArr(this.data, this.merge)
+  mounted() {
+    this.getPageData();
+    this.getMergeArr(this.data, this.merge);
   },
   methods: {
     /* eslint-disable */
@@ -81,8 +97,6 @@ export default {
           }
         })
       })
-
-      
     },
     mergeMethod (data) {
       const { column, rowIndex } = data;
@@ -95,6 +109,22 @@ export default {
           colspan: COL
         }
       }
+    },
+    getPageData() {
+      this.$axios.get(`http://localhost:3054/${this.url}`, {
+        params: Object.assign(this.pageInfo)
+      }).then(res => {
+        const { data: { data } } = res;
+        this.$emit('returnData', data);
+      })
+    },
+    currentChange(current) {
+      this.pageInfo.page = current;
+      this.getPageData();
+    },
+    sizeChange(page) {
+      this.pageInfo.limit = page;
+      this.getPageData();
     }
   },
   watch: {
@@ -106,7 +136,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.pagination-wraaper__right {
+.pagination-wrapper__right {
   width: 100%;
   text-align: right;
   margin-top: 20px;
