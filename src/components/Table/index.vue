@@ -1,9 +1,13 @@
 <template>
-  <div>
-    <el-table :data="data" v-bind="$attrs" v-on="$listeners" :header-cell-style="defaultOptions.orisTableHeader"
+  <div class="table-fragment">
+    <el-table v-loading="tableLoading" :data="tableData" v-bind="$attrs" v-on="$listeners" :header-cell-style="defaultOptions.orisTableHeader"
       :stripe="defaultOptions.stripe" :span-method="this.merge ? this.mergeMethod : this.spanMethod">
-      <template v-for="item in columns">
-        <slot v-if="item.slot" :name="item.slot"></slot>
+      <template v-for="item in column">
+        <el-table-column v-if="item.slotName" :key="item.prop" v-bind="item" v-on="$listeners">
+            <template slot-scope="scope">
+              <slot :name="item.slotName" :data="scope.row" :index="scope.$index" />
+            </template>
+        </el-table-column>
         <el-table-column v-else  v-bind="item" v-on="$listeners" :key="item.prop" :align="item.align || 'left'"></el-table-column>
       </template>
     </el-table>
@@ -19,11 +23,7 @@
 export default {
   name: 'MJTable',
   props: {
-    data: {
-      type: Array,
-      default: () => []
-    },
-    columns: {
+    column: {
       type: Array,
       default: () => [],
     },
@@ -47,16 +47,16 @@ export default {
       type: String,
       default: 'pagination-wrapper__right'
     },
-    url: {
-      type: String,
-      default: ''
-    },
     query: {
       type: Object,
       default: () => {}
+    },
+    requestFn: {
+      type: Function
     }
   },
   data: () => ({
+    tableData: [],
     defaultOptions: {
       border: false,
       stripe: false,
@@ -68,7 +68,8 @@ export default {
     pageInfo: {
       page: 1,
       limit: 10
-    }
+    },
+    tableLoading: false
   }),
   mounted() {
     this.getPageData();
@@ -111,11 +112,21 @@ export default {
       }
     },
     getPageData() {
-      this.$axios.get(`http://localhost:3054/${this.url}`, {
-        params: Object.assign(this.pageInfo)
-      }).then(res => {
-        const { data: { data } } = res;
-        this.$emit('returnData', data);
+      this.tableLoading = true;
+      this.requestFn(Object.assign({}, this.pageInfo, this.query)).then(res => {
+        console.log(res);
+        const {message, data, total} = res;
+        if (res.status === 0) {
+          this.$emit('returnData', data);
+        } else {
+          this.$message.error(message);
+        }
+        this.tableData = data;
+        this.total = total;
+        this.tableLoading = false;
+      }).catch(e => {
+        this.tableLoading = false;
+        throw new Error(e);
       })
     },
     currentChange(current) {
@@ -125,7 +136,7 @@ export default {
     sizeChange(page) {
       this.pageInfo.limit = page;
       this.getPageData();
-    }
+    },
   },
   watch: {
     merge () {
@@ -136,9 +147,12 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.pagination-wrapper__right {
-  width: 100%;
-  text-align: right;
+.table-fragment {
   margin-top: 20px;
+  .pagination-wrapper__right {
+    width: 100%;
+    text-align: right;
+    margin-top: 20px;
+  }
 }
 </style>

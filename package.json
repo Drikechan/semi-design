@@ -63,5 +63,8 @@
   ],
   "jest": {
     "preset": "@vue/cli-plugin-unit-jest"
+  },
+  "msw": {
+    "workerDirectory": "public"
   }
 }
