@@ -1,7 +1,15 @@
 <template>
   <div class="table-fragment">
-    <el-table v-loading="tableLoading" :data="tableData" v-bind="$attrs" v-on="$listeners" :header-cell-style="defaultOptions.orisTableHeader"
+    <el-table v-loading="tableLoading" :ref="tableRef" :data="tableData" v-bind="$attrs" v-on="$listeners" :header-cell-style="defaultOptions.orisTableHeader"
       :stripe="defaultOptions.stripe" :span-method="this.merge ? this.mergeMethod : this.spanMethod">
+      <template v-if="columnType">
+        <el-table-column v-if="columnType === 'expand'" type="expand" align="center">
+          <template slot-scope="props">
+            <slot name="expand" v-bind="props" />
+          </template>
+        </el-table-column>
+        <el-table-column v-else :type="columnType" :label="columnTypeName" width="55" align="center" />
+      </template>        
       <template v-for="item in column">
         <el-table-column v-if="item.slotName" :key="item.prop" v-bind="item" v-on="$listeners">
             <template slot-scope="scope">
@@ -53,6 +61,15 @@ export default {
     },
     requestFn: {
       type: Function
+    },
+    tableRef: {
+      type: String
+    },
+    columnType: {
+      type: String
+    },
+    columnTypeName: {
+      type: String
     }
   },
   data: () => ({
@@ -73,7 +90,7 @@ export default {
   }),
   mounted() {
     this.getPageData();
-    this.getMergeArr(this.data, this.merge);
+    this.getMergeArr(this.tableData, this.merge);
   },
   methods: {
     /* eslint-disable */
@@ -140,7 +157,7 @@ export default {
   },
   watch: {
     merge () {
-      this.getMergeArr(this.data, this.merge)
+      this.getMergeArr(this.tableData, this.merge)
     }    
   }
 };
