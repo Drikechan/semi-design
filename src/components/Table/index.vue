@@ -1,11 +1,11 @@
 <template>
   <div class="table-fragment">
     <el-table v-loading="tableLoading" :ref="tableRef" :data="tableData" v-bind="$attrs" v-on="$listeners" :header-cell-style="defaultOptions.orisTableHeader"
-      :stripe="defaultOptions.stripe" :span-method="this.merge ? this.mergeMethod : this.spanMethod">
+       :span-method="this.merge ? this.mergeMethod : this.spanMethod">
       <template v-if="columnType">
         <el-table-column v-if="columnType === 'expand'" type="expand" align="center">
-          <template slot-scope="props">
-            <slot name="expand" v-bind="props" />
+          <template slot-scope="scope">
+            <slot name="expand" v-bind="scope" />
           </template>
         </el-table-column>
         <el-table-column v-else :type="columnType" :label="columnTypeName" width="55" align="center" />
@@ -13,7 +13,7 @@
       <template v-for="item in column">
         <el-table-column v-if="item.slotName" :key="item.prop" v-bind="item" v-on="$listeners">
             <template slot-scope="scope">
-              <slot :name="item.slotName" :data="scope.row" :index="scope.$index" />
+              <slot :name="item.slotName" :record="scope.row" :index="scope.$index" />
             </template>
         </el-table-column>
         <el-table-column v-else  v-bind="item" v-on="$listeners" :key="item.prop" :align="item.align || 'left'"></el-table-column>
@@ -29,7 +29,7 @@
 
 <script>
 export default {
-  name: 'MJTable',
+  name: 'OrisTable',
   props: {
     column: {
       type: Array,
@@ -63,20 +63,23 @@ export default {
       type: Function
     },
     tableRef: {
-      type: String
+      type: String,
+      default: 'tableRef'
     },
     columnType: {
       type: String
     },
     columnTypeName: {
       type: String
-    }
+    },
+    spanMethod: {
+      type: Function
+    },
   },
   data: () => ({
     tableData: [],
     defaultOptions: {
       border: false,
-      stripe: false,
       orisTableHeader: { background: '#EBEEF5', color: '#606266' },
     },
     mergeLine: {},
@@ -89,7 +92,7 @@ export default {
     tableLoading: false
   }),
   mounted() {
-    this.getPageData();
+     this.requestFn && this.getPageData();
     this.getMergeArr(this.tableData, this.merge);
   },
   methods: {
@@ -128,10 +131,10 @@ export default {
         }
       }
     },
-    getPageData() {
+    getPageData(page) {
+      page && (this.pageInfo.page = page);
       this.tableLoading = true;
-      this.requestFn(Object.assign({}, this.pageInfo, this.query)).then(res => {
-        console.log(res);
+      this.requestFn({...this.pageInfo, ...this.query}).then(res => {
         const {message, data, total} = res;
         if (res.status === 0) {
           this.$emit('returnData', data);
