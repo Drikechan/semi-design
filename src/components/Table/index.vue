@@ -66,7 +66,7 @@ export default {
       type: Object,
       default: () => {}
     },
-    requestFn: {
+    requestInteface: {
       type: Function
     },
     tableRef: {
@@ -99,7 +99,7 @@ export default {
     tableLoading: false
   }),
   mounted() {
-     this.requestFn && this.getPageData();
+     this.requestInteface && this.getPageData();
     this.getMergeArr(this.tableData, this.merge);
   },
   methods: {
@@ -141,7 +141,7 @@ export default {
     getPageData(page) {
       page && (this.pageInfo.page = page);
       this.tableLoading = true;
-      this.requestFn({...this.pageInfo, ...this.query}).then(res => {
+      this.requestInteface({...this.pageInfo, ...this.query}).then(res => {
         const {message, data, total} = res;
         if (res.status === 0) {
           this.$emit('returnData', data);
