@@ -5,7 +5,7 @@
       <template v-if="columnType">
         <el-table-column v-if="columnType === 'expand'" type="expand" align="center">
           <template slot-scope="scope">
-            <slot name="expand" v-bind="scope" />
+            <slot name="expand" :row="scope.row" :index="scope.$index" />
           </template>
         </el-table-column>
         <el-table-column v-else :type="columnType" :label="columnTypeName" width="55" align="center" />
@@ -13,10 +13,13 @@
       <template v-for="item in column">
         <el-table-column v-if="item.slotName" :key="item.prop" v-bind="item" v-on="$listeners">
             <template slot-scope="scope">
-              <slot :name="item.slotName" :record="scope.row" :index="scope.$index" />
+              <slot :name="item.slotName" :row="scope.row" :index="scope.$index" />
             </template>
         </el-table-column>
-        <el-table-column v-else  v-bind="item" v-on="$listeners" :key="item.prop" :align="item.align || 'left'"></el-table-column>
+        <template  v-else-if="item.children">
+          <oris-column :key="item.prop" :column="item"></oris-column>
+        </template>
+        <el-table-column v-else v-bind="item" v-on="$listeners" :key="item.prop" :align="item.align || 'left'" ></el-table-column>
       </template>
     </el-table>
     <div :class="paginationClassName">
@@ -28,8 +31,12 @@
 </template>
 
 <script>
+import OrisColumn from './column.vue'
 export default {
   name: 'OrisTable',
+  components: {
+    OrisColumn
+  },
   props: {
     column: {
       type: Array,
